@@ -11,7 +11,7 @@ export async function POST(req: Request) {
         }
 
         const prompt = buildTutorPrompt(question, subject, board, language, userProfile);
-        const text = await generateAIContent(prompt);
+        const text = await generateAIContent(prompt, undefined, "image/jpeg", subject || "");
 
         // Save to history (non-blocking)
         try {

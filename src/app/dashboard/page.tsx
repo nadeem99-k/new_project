@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
     Brain,
     Camera,
     Calculator,
     FileText,
-    HelpCircle,
     MessageSquare,
     Sparkles,
     TrendingUp,
@@ -15,7 +15,9 @@ import {
     Calendar,
     Share2,
     FileSearch,
-    Clock
+    Clock,
+    UserCircle,
+    X,
 } from "lucide-react";
 
 const featureCategories = [
@@ -57,20 +59,24 @@ const tips = [
 
 export default function DashboardHome() {
     const [userName, setUserName] = useState("Student");
-    const [tip, setTip] = useState(tips[0]); // stable default for SSR
-    const [greeting, setGreeting] = useState("Good Morning"); // stable default for SSR
+    const [tip, setTip] = useState(tips[0]);
+    const [greeting, setGreeting] = useState("Good Morning");
     const [quote, setQuote] = useState("Loading your daily motivation...");
+    const [showProfileBanner, setShowProfileBanner] = useState(false);
     const supabase = createClient();
+    const router = useRouter();
 
     useEffect(() => {
-        // Run client-only logic after mount to avoid hydration mismatch
         setTip(tips[Math.floor(Math.random() * tips.length)]);
         const hour = new Date().getHours();
         setGreeting(hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening");
 
         supabase.auth.getUser().then(({ data }) => {
-            const name = data.user?.user_metadata?.full_name || data.user?.email?.split("@")[0] || "Student";
+            const fullName = data.user?.user_metadata?.full_name;
+            const name = fullName || data.user?.email?.split("@")[0] || "Student";
             setUserName(name);
+            // Show banner if no full_name set (Google users may skip profile)
+            if (!fullName) setShowProfileBanner(true);
         });
 
         fetch("/api/quote")
@@ -78,6 +84,7 @@ export default function DashboardHome() {
             .then(data => setQuote(data.quote))
             .catch(() => setQuote("The future belongs to those who prepare for it today. - StudyAI"));
     }, [supabase.auth]);
+
 
     return (
         <div className="ramadan-pattern container-responsive" style={{ minHeight: "100vh" }}>
@@ -93,6 +100,48 @@ export default function DashboardHome() {
                     </div>
                 </div>
             </div>
+
+            {/* PROFILE COMPLETION BANNER */}
+            {showProfileBanner && (
+                <div
+                    className="animate-slide-up"
+                    style={{
+                        marginBottom: "1.5rem",
+                        padding: "0.9rem 1.25rem",
+                        borderRadius: "0.85rem",
+                        background: "linear-gradient(135deg, rgba(79,70,229,0.15), rgba(124,58,237,0.1))",
+                        border: "1px solid rgba(99,102,241,0.4)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.85rem",
+                        cursor: "pointer",
+                    }}
+                    onClick={() => router.push("/dashboard/settings")}
+                >
+                    <div style={{
+                        width: 36, height: 36, borderRadius: "50%",
+                        background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+                    }}>
+                        <UserCircle size={18} color="white" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "white" }}>
+                            Complete your profile ✨
+                        </div>
+                        <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "0.1rem" }}>
+                            Add your name &amp; details to personalise your experience →
+                        </div>
+                    </div>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setShowProfileBanner(false); }}
+                        style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", padding: "0.25rem", flexShrink: 0 }}
+                        aria-label="Dismiss"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+            )}
 
             {/* QUOTE OF THE DAY */}
             <div className="glass-card animate-slide-up" style={{ padding: "1.25rem", marginBottom: "2rem", borderLeft: "4px solid var(--ramadan-gold)", background: "rgba(255, 215, 0, 0.05)", animationDelay: "0.05s" }}>
