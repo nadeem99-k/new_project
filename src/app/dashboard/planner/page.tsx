@@ -36,20 +36,20 @@ export default function PlannerPage() {
     };
 
     return (
-        <div style={{ padding: "2rem", maxWidth: 900, margin: "0 auto", minHeight: "90vh" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "2rem" }}>
+        <div className="container-responsive" style={{ maxWidth: 900, minHeight: "90vh" }}>
+            <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginBottom: "2rem" }}>
                 <div style={{ width: 45, height: 45, borderRadius: "12px", background: "#6366f122", display: "flex", alignItems: "center", justifyContent: "center", color: "#6366f1" }}>
                     <Calendar size={24} />
                 </div>
                 <div>
-                    <h1 style={{ fontSize: "1.5rem", fontWeight: 800 }}>Smart Exam Planner</h1>
+                    <h1 style={{ fontSize: "clamp(1.2rem, 5vw, 1.5rem)", fontWeight: 800 }}>Smart Exam Planner</h1>
                     <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Your AI-powered roadmap to exam success</p>
                 </div>
             </div>
 
             {!plan ? (
-                <div className="glass-card animate-slide-up" style={{ padding: "2rem" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+                <div className="glass-card animate-slide-up" style={{ padding: "1.5rem md:2rem" }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div>
                             <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Exam Date</label>
                             <input
@@ -117,18 +117,20 @@ export default function PlannerPage() {
                             <Calendar size={18} color="#6366f1" />
                             <span style={{ fontWeight: 700 }}>Your Personalized Schedule</span>
                         </div>
-                        {plan.schedule.map((item, i) => (
-                            <div key={i} style={{ padding: "1.25rem", borderBottom: i === plan.schedule.length - 1 ? "none" : "1px solid rgba(255,255,255,0.05)", display: "flex", gap: "1.25rem", alignItems: "flex-start" }}>
-                                <div style={{ fontSize: "0.75rem", fontWeight: 800, color: "#6366f1", textTransform: "uppercase", width: 60, flexShrink: 0 }}>{item.day}</div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: 600, marginBottom: "0.25rem" }}>{item.task}</div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                                        <Clock size={14} /> {item.time}
+                        <div style={{ overflowX: "auto" }}>
+                            {plan.schedule.map((item, i) => (
+                                <div key={i} style={{ padding: "1.25rem", borderBottom: i === plan.schedule.length - 1 ? "none" : "1px solid rgba(255,255,255,0.05)", display: "flex", gap: "1.25rem", alignItems: "flex-start", minWidth: "300px" }}>
+                                    <div style={{ fontSize: "0.75rem", fontWeight: 800, color: "#6366f1", textTransform: "uppercase", width: 60, flexShrink: 0 }}>{item.day}</div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: 600, marginBottom: "0.25rem" }}>{item.task}</div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                                            <Clock size={14} /> {item.time}
+                                        </div>
                                     </div>
+                                    <CheckCircle2 size={18} color="rgba(255,255,255,0.1)" />
                                 </div>
-                                <CheckCircle2 size={18} color="rgba(255,255,255,0.1)" />
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
 
                     <div className="glass-card" style={{ padding: "1.5rem", background: "linear-gradient(135deg, rgba(4, 120, 87, 0.1), rgba(251, 191, 36, 0.05))", border: "1px solid rgba(251, 191, 36, 0.2)" }}>
@@ -139,11 +141,11 @@ export default function PlannerPage() {
                         <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>{plan.ramadan_tips}</p>
                     </div>
 
-                    <div style={{ display: "flex", gap: "1rem" }}>
-                        <button onClick={() => setPlan(null)} className="glass-card" style={{ flex: 1, padding: "1rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", fontWeight: 700 }}>
+                    <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                        <button onClick={() => setPlan(null)} className="glass-card" style={{ flex: 1, minWidth: "150px", padding: "1rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", fontWeight: 700 }}>
                             <RefreshCw size={18} /> New Plan
                         </button>
-                        <button className="btn-accent" style={{ flex: 1, background: "#6366f1", border: "none" }}>
+                        <button className="btn-accent" style={{ flex: 1, minWidth: "150px", background: "#6366f1", border: "none", justifyContent: "center" }}>
                             Save to Calendar
                         </button>
                     </div>

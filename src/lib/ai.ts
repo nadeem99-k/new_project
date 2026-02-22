@@ -204,23 +204,33 @@ export function buildTutorPrompt(
     question: string,
     subject: string,
     board: string,
-    language: string = "English"
+    language: string = "English",
+    userProfile?: { school?: string; location?: string; bio?: string; grade?: string; name?: string }
 ) {
     const isUrdu = language.toLowerCase().includes("urdu");
 
-    return `You are an expert AI tutor for students in Pakistan following the ${board} curriculum.
-Your goal is to help the student understand the core concept of the following ${subject} question.
+    // Construct student background context
+    let background = `curriculum for ${board}`;
+    if (userProfile?.grade) background += `, ${userProfile.grade}`;
+    if (userProfile?.school) background += ` at ${userProfile.school}`;
+    if (userProfile?.location) background += ` in ${userProfile.location}`;
+
+    const studentInfo = userProfile?.bio ? `\nStudent Background: ${userProfile.bio}` : "";
+    const nameGreeting = userProfile?.name ? `Address the student as ${userProfile.name} occasionally.` : "";
+
+    return `You are an expert AI tutor for students in Pakistan following the ${background}.
+Your goal is to help the student understand the core concept of the following ${subject} question.${studentInfo}
 
 Student's Question:
 "${question}"
 
 Instructions:
-1. Identify the core topic and concept being tested.
+1. Identify the core topic and concept being tested. ${nameGreeting}
 2. Provide a step-by-step solution. Break down complex steps into simpler, manageable parts.
 3. Use ${language} for the entire response.
 ${isUrdu ? "- If using Urdu script, ensure it's clear. If using Roman Urdu, keep it natural." : ""}
 4. Formatting: Use bold text for key terms and markdown tables/lists for clarity.
-5. If it's a math/science problem, include a 'Pro Tip' or 'Exam Tip' section at the end.
+5. If it's a math/science problem, include a 'Pro Tip' or 'Exam Tip' section at the end. Use tips specific to ${board} if possible.
 6. Friendly Tone: Act like a supportive teacher (use phrases like "Don't worry," "Here's the trick," etc.).
 
 Remember: Don't just give the answer; teach the student how to solve similar problems!`;

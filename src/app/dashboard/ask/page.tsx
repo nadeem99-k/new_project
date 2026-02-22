@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Send, Brain, Loader2, BookOpen, Volume2, Mic, MicOff } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 const subjects = ["General", "Mathematics", "Physics", "Chemistry", "Biology", "English", "Urdu", "Islamiat", "Pakistan Studies", "Computer Science", "History", "Geography"];
 const boards = ["Punjab Board", "Federal Board", "Sindh Board", "KPK Board", "Cambridge O/A Level", "Matric", "FSc / FA"];
@@ -21,11 +22,33 @@ export default function AskPage() {
     const [loading, setLoading] = useState(false);
     const bottomRef = useRef<HTMLDivElement>(null);
 
+    const [isListening, setIsListening] = useState(false);
+    const [userProfile, setUserProfile] = useState<any>(null);
+
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const [isListening, setIsListening] = useState(false);
+    useEffect(() => {
+        const fetchProfile = async () => {
+            const { data: { user } } = await createClient().auth.getUser();
+            if (user) {
+                const { data } = await createClient()
+                    .from("profiles")
+                    .select("*")
+                    .eq("id", user.id)
+                    .single();
+
+                if (data) {
+                    setUserProfile(data);
+                    setBoard(data.board || "Punjab Board");
+                } else {
+                    setUserProfile({ name: user.user_metadata.full_name });
+                }
+            }
+        };
+        fetchProfile();
+    }, []);
 
     // --- Voice Logic (Speech to Text) ---
     const startListening = () => {
@@ -61,7 +84,19 @@ export default function AskPage() {
             const res = await fetch("/api/ask", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ question, subject, board, language }),
+                body: JSON.stringify({
+                    question,
+                    subject,
+                    board,
+                    language,
+                    userProfile: userProfile ? {
+                        name: userProfile.name,
+                        school: userProfile.school,
+                        location: userProfile.location,
+                        bio: userProfile.bio,
+                        grade: userProfile.grade
+                    } : undefined
+                }),
             });
             const data = await res.json();
             const aiResponse = data.answer || "Sorry, I couldn't answer that. Please try again.";
@@ -74,17 +109,23 @@ export default function AskPage() {
     }
 
     return (
-        <div style={{ height: "100vh", display: "flex", flexDirection: "column", maxWidth: 800, margin: "0 auto", padding: "1.5rem 1rem 0" }}>
-            {/* ... previous code ... */}
+        <div style={{
+            height: "calc(100vh - 60px - 70px)", // Accounting for mobile header and bottom nav
+            display: "flex",
+            flexDirection: "column",
+            maxWidth: 800,
+            margin: "0 auto",
+            padding: "1rem"
+        }} className="responsive-chat-container">
             <div style={{ marginBottom: "1rem" }}>
-                <h1 style={{ fontWeight: 800, fontSize: "1.5rem", display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <h1 style={{ fontWeight: 800, fontSize: "clamp(1.2rem, 5vw, 1.5rem)", display: "flex", alignItems: "center", gap: "0.6rem" }}>
                     <Brain size={24} color="#818cf8" /> Ask AI Tutor
                 </h1>
-                <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: "0.25rem" }}>Type any question and get a step-by-step explanation</p>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem", marginTop: "0.25rem" }}>Type any question and get a step-by-step explanation</p>
             </div>
 
             {/* SELECTORS */}
-            <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
                 {[
                     { value: subject, onChange: setSubject, options: subjects, label: "Subject" },
                     { value: board, onChange: setBoard, options: boards, label: "Board" },
@@ -95,7 +136,7 @@ export default function AskPage() {
                         value={sel.value}
                         onChange={(e) => sel.onChange(e.target.value)}
                         className="input-field"
-                        style={{ width: "auto", flex: "1 1 130px", fontSize: "0.82rem", padding: "0.5rem 0.75rem" }}
+                        style={{ width: "auto", flex: "1 1 100px", fontSize: "0.75rem", padding: "0.4rem 0.6rem" }}
                     >
                         {sel.options.map((o) => <option key={o} value={o}>{o}</option>)}
                     </select>
@@ -122,13 +163,13 @@ export default function AskPage() {
                                 </button>
                             </div>
                         )}
-                        <div className={msg.role === "user" ? "chat-user" : "chat-ai"}>
+                        <div className={msg.role === "user" ? "chat-user" : "chat-ai"} style={{ maxWidth: "90%", fontSize: "0.85rem" }}>
                             {msg.role === "ai" ? (
-                                <div className="prose-ai" style={{ fontSize: "0.9rem" }}>
+                                <div className="prose-ai">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                                 </div>
                             ) : (
-                                <p style={{ fontSize: "0.9rem", lineHeight: 1.6 }}>{msg.content}</p>
+                                <p style={{ lineHeight: 1.6 }}>{msg.content}</p>
                             )}
                         </div>
                     </div>
@@ -140,7 +181,7 @@ export default function AskPage() {
                         </div>
                         <div className="chat-ai" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                             <Loader2 size={16} style={{ animation: "spin-slow 1s linear infinite" }} color="#818cf8" />
-                            <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>Thinking...</span>
+                            <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Thinking...</span>
                         </div>
                     </div>
                 )}
@@ -148,24 +189,24 @@ export default function AskPage() {
             </div>
 
             {/* INPUT */}
-            <div style={{ padding: "1rem 0", borderTop: "1px solid var(--border)", display: "flex", gap: "0.75rem" }}>
+            <div style={{ padding: "1rem 0", borderTop: "1px solid var(--border)", display: "flex", gap: "0.5rem" }}>
                 <div style={{ position: "relative", flex: 1 }}>
-                    <BookOpen size={15} style={{ position: "absolute", left: "0.9rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-secondary)" }} />
+                    <BookOpen size={15} style={{ position: "absolute", left: "0.8rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-secondary)" }} />
                     <input
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                        placeholder="Type your question here..."
+                        placeholder="Type your question..."
                         className="input-field"
-                        style={{ paddingLeft: "2.4rem", paddingRight: "3rem" }}
+                        style={{ paddingLeft: "2.2rem", paddingRight: "2.8rem", fontSize: "0.9rem" }}
                         disabled={loading}
                     />
                     <button
                         onClick={startListening}
                         style={{
                             position: "absolute",
-                            right: "0.7rem",
+                            right: "0.6rem",
                             top: "50%",
                             transform: "translateY(-50%)",
                             background: isListening ? "rgba(239, 68, 68, 0.1)" : "none",
@@ -179,18 +220,27 @@ export default function AskPage() {
                             justifyContent: "center"
                         }}
                     >
-                        {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                        {isListening ? <MicOff size={16} /> : <Mic size={16} />}
                     </button>
                 </div>
                 <button
                     onClick={sendMessage}
                     disabled={loading || !input.trim()}
                     className="btn-primary"
-                    style={{ padding: "0.7rem 1.25rem", opacity: loading || !input.trim() ? 0.6 : 1 }}
+                    style={{ padding: "0.6rem 1rem", minWidth: "44px", justifyContent: "center", opacity: loading || !input.trim() ? 0.6 : 1 }}
                 >
                     <Send size={16} />
                 </button>
             </div>
+
+            <style jsx>{`
+                @media (min-width: 769px) {
+                    .responsive-chat-container {
+                        height: 100vh !important;
+                        padding: 1.5rem 1rem 0 !important;
+                    }
+                }
+            `}</style>
         </div>
     );
 }

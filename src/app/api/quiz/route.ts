@@ -4,13 +4,19 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
     try {
-        const { topic } = await req.json();
+        const { topic, userProfile } = await req.json();
 
         if (!topic) {
             return NextResponse.json({ error: "Topic is required" }, { status: 400 });
         }
 
-        const prompt = `Generate a 5-question multiple choice quiz on the topic: "${topic}".
+        // Student context
+        const boardInfo = userProfile?.board ? `following the ${userProfile.board} curriculum` : "";
+        const gradeInfo = userProfile?.grade ? `for ${userProfile.grade} level` : "";
+        const nameInfo = userProfile?.name ? `Personalize it for a student named ${userProfile.name}.` : "";
+
+        const prompt = `Generate a 5-question multiple choice quiz on the topic: "${topic}" ${boardInfo} ${gradeInfo}.
+${nameInfo}
 Output ONLY a valid JSON array of objects with this structure:
 [
   {

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
     try {
-        const { image } = await req.json();
+        const { image, userProfile } = await req.json();
 
         if (!image) {
             return NextResponse.json({ error: "Image is required" }, { status: 400 });
@@ -13,10 +13,15 @@ export async function POST(req: Request) {
         // Extract base64 data
         const base64Data = image.split(",")[1];
 
-        const prompt = `You are an expert AI tutor. 
+        // Construct student background context
+        let background = userProfile?.board ? `following the ${userProfile.board} curriculum` : "expert AI tutor";
+        if (userProfile?.grade) background += ` for ${userProfile.grade}`;
+        if (userProfile?.school) background += ` at ${userProfile.school}`;
+
+        const prompt = `You are an ${background}. 
 1. Look at this image of a student's question.
 2. If it's a math problem, physics derivation, or any specific academic question, extract it.
-3. Provide a step-by-step explanation and the final answer.
+3. Provide a step-by-step explanation and the final answer. Keep it aligned with ${userProfile?.board || "the student's"} curriculum expectations.
 4. Keep the explanation simple enough for a student to understand.
 5. Use markdown for clear formatting.`;
 

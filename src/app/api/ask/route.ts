@@ -4,13 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
     try {
-        const { question, subject, board, language } = await req.json();
+        const { question, subject, board, language, userProfile } = await req.json();
 
         if (!question) {
             return NextResponse.json({ error: "Question is required" }, { status: 400 });
         }
 
-        const prompt = buildTutorPrompt(question, subject, board, language);
+        const prompt = buildTutorPrompt(question, subject, board, language, userProfile);
         const text = await generateAIContent(prompt);
 
         // Save to history (non-blocking)
